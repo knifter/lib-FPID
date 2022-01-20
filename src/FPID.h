@@ -1,7 +1,7 @@
 /*
- * MiniPID.h
+ * FPID.h
  *
- *  Created on: 5 apr. 2018
+ *  Created jan 2022
  *      Author: Tijs
  */
 
