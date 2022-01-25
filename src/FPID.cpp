@@ -11,19 +11,8 @@
 
 #include "FPID.h"
 
-int clamp(double* value, double min, double max);
-bool isbetween(double value, double min, double max);
-
-//**********************************
-//Constructor functions
-//**********************************
-FPID::FPID()
-{
-    _settings = static_cast<fpid_settings_t*>(malloc(sizeof(fpid_settings_t)));
-    _input = &input_val;
-    _output = &output_val;
-    init();
-};
+int clamp(double *value, const double min, const double max);
+bool isbetween(const double value, const double min, const double max);
 
 FPID::FPID(fpid_settings_t* s, double* input, double* output) :
     _settings(s), _input(input), _output(output)
@@ -61,34 +50,6 @@ void FPID::alignOutput()
     // calculate (estimate) the required integral sum to obtain current output
     // i.e.: take over current output
 	_errorsum = *_output - forwardTerm();
-};
-
-//**********************************
-//Configuration functions
-//**********************************
-/**
- * Configure the Proportional gain parameter. <br>
- * this->responds quicly to changes in setpoint, and provides most of the initial driving force
- * to make corrections. <br>
- * Some systems can be used with only a P gain, and many can be operated with only PI.<br>
- * For position based controllers, this->is the first parameter to tune, with I second. <br>
- * For rate controlled systems, this->is often the second after F.
- *
- * @param p Proportional gain. Affects output according to <b>output+=P*(setpoint-current_value)</b>
- */
-void FPID::setParameters(const double p, const double i, const double d)
-{
-	_settings->kP = p;
-	_settings->kI = i;
-	_settings->kD = d;
-};
-
-void FPID::setParameters(const double p, const double i, const double d, const double f)
-{
-	_settings->kP = p;
-	_settings->kI = i;
-	_settings->kD = d;
-	_settings->kF = f;
 };
 
 /**Set the maximum output value contributed by the I component of the system
@@ -136,29 +97,12 @@ void FPID::setOutputLimits(const double minimum, const double maximum)
 	};
 };
 
-//**********************************
-//Primary operating functions
-//**********************************
-
-/**Set the target for the PID calculations
- * @param setpoint
- */
-void FPID::setSetpoint(double setpoint)
-{
-	_settings->setpoint = setpoint;
-};
-
-double FPID::getSetpoint()
-{
-	return _settings->setpoint;
-};
-
 /** Calculate the PID value needed to hit the target setpoint.
 * Automatically re-calculates the output at each call.
 * @param dt Time differential between calls
 * @return whether the output is clamped or the intergral has wound up: status
 */
-bool FPID::calculate(double dt)
+bool FPID::calculate(const double dt)
 {
     // Sample settings for this loop
 	double sp = _settings->setpoint;
@@ -225,7 +169,6 @@ bool FPID::calculate(double dt)
 	return freeze_integral;
 };
 
-
 double FPID::forwardTerm()
 {
     return _settings->kF * _settings->setpoint;
@@ -238,7 +181,7 @@ double FPID::forwardTerm()
  * @param max minimum value in range
  * @return 0 if it's within provided range, -1 (min) or +1 (max) otherwise
  */
-int clamp(double* value, double min, double max)
+int clamp(double* value, const double min, const double max)
 {
 	if(*value > max)
 	{
@@ -260,7 +203,8 @@ int clamp(double* value, double min, double max)
  * @param max Maximum value of range
  * @return
  */
-bool isbetween(double value, double min, double max)
+bool isbetween(const double value, const double min, const double max)
 {
 		return (min<value) && (value<max);
 };
+

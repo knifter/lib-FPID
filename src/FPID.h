@@ -5,8 +5,8 @@
  *      Author: Tijs
  */
 
-#ifndef __MINIPID_H_
-#define __MINIPID_H_
+#ifndef __FPID_H_
+#define __FPID_H_
 
 #include <stdlib.h>
 #include <math.h>
@@ -16,44 +16,33 @@ class FPID
     public:
         typedef struct
         {
+            double kF;
             double kP;
             double kI;
             double kD;
-            double kF;
             double setpoint;
             double outputFilter;
-            bool active;
+            bool   active;
         } fpid_settings_t;
 
-    	FPID();
         FPID(fpid_settings_t* s, double* input, double* output);
 
         // Aligns the output of the controller with the current output
         // Call this before (re)starting the PID loop to prevent a large start-up kick
 	    void alignOutput();
-        bool calculate(double dt = 1.0);
+        bool calculate(const double dt = 1.0);
 
         // Primary interface, with external pointers
         void setInputPtr(double* input);
         void setOuputPtr(double* output);
-
-        // Primary interface, internal values
-        void setInput(double);
-        void setSetpoint(double);
-        double getSetpoint();
-
-       	void setParameters(const double p, const double i, const double d);
-    	void setParameters(const double p, const double i, const double d, const double f);
 
         // Minimum and Maximum output values
 	    void setOutputLimits(const double);
 	    void setOutputLimits(const double, const double);
 	    void getOutputLimits(double*, double*);
 	    
-    
-
         // Set the maximum rate the output can increase per cycle.
-	    void setOutputRampRate(double);
+	    void setOutputRampRate(const double);
 
         /**Set a filter on the output to reduce sharp oscillations.
          * 0.1 is likely a sane starting value. 
@@ -62,7 +51,7 @@ class FPID
          * <pre>output*(1-strength)*sum(0..n){output*strength^n}</pre>
          * output valid between [0..1), meaning [current output only.. historical output only)
          */
-	    void setOutputFilter(double);
+	    void setOutputFilter(const double);
 
         /**Set the maximum output value contributed by the I component of the system
          * this can be used to prevent large windup issues and make tuning simpler
@@ -76,7 +65,7 @@ class FPID
          *  this->limits the reactivity of P term, and restricts impact of large D term
          *  during large setpoint adjustments. Increases lag and I term if range is too small.
          */
-	    void setSetpointRate(double);
+	    void setSetpointRate(const double);
     
     protected:
         // Initialize the settings struct, resets values. Don't call if settings come from NVS
@@ -85,11 +74,8 @@ class FPID
 
         // pointers to the outside world
         fpid_settings_t *_settings = nullptr;
-        double* _input;
-        double* _output;
-        // If no input/output ptr is set, these are used:
-        double input_val = 0;
-        double output_val = 0;
+        double *_input;
+        double *_output;
 
         double _minOutput = -INFINITY;
         double _maxOutput = INFINITY;
@@ -108,6 +94,31 @@ class FPID
     	
     	bool _outputClampedByRamprate = 0;
 	    bool _outputClampedByMinMax = 0;
+};
+
+class FPIDWrapped : public FPID
+{
+    public:
+        FPIDWrapped() : FPID(&_settings_inst, &_input_inst, &_output_inst) {};
+
+        // Primary interface, internal values
+        void setInput(const double input) { _input_inst = input; };
+        void setSetpoint(const double setpoint) { _settings_inst.setpoint = setpoint; };
+        double getSetpoint() { return _settings_inst.setpoint; };
+
+        void setParameters(const double p, const double i, const double d) { setParameters(p, i, d, _settings_inst.kF); };
+        void setParameters(const double p, const double i, const double d, const double f)
+        { 
+            _settings_inst.kP = p; 
+            _settings_inst.kI = i; 
+            _settings_inst.kD = d; 
+            _settings_inst.kF = f; 
+        };
+
+    private:
+        FPID::fpid_settings_t _settings_inst;
+        double _input_inst;
+        double _output_inst;
 };
 
 #endif /* __MINIPID_H_ */
