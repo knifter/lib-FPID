@@ -69,13 +69,13 @@ class FPID
     
     protected:
         // Initialize the settings struct, resets values. Don't call if settings come from NVS
-        void init();
+        // void init();
 	    void set_output(double);
 
         // pointers to the outside world
-        fpid_settings_t *_settings = nullptr;
-        double *_input;
-        double *_output;
+        fpid_settings_t *_settings_ptr = nullptr;
+        double *_input_ptr;
+        double *_output_ptr;
 
         double _minOutput = -INFINITY;
         double _maxOutput = INFINITY;

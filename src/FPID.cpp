@@ -10,34 +10,35 @@
 #include <sys/time.h>
 
 #include "FPID.h"
+// #include "tools-log.h"
 
 int clamp(double *value, const double min, const double max);
 bool isbetween(const double value, const double min, const double max);
 
-FPID::FPID(fpid_settings_t* s, double* input, double* output) :
-    _settings(s), _input(input), _output(output)
+FPID::FPID(fpid_settings_t *s, double *input, double *output) :
+    _settings_ptr(s), _input_ptr(input), _output_ptr(output)
 {
 };
 
-void FPID::init()
-{
-	_settings->kP = 1.0;
-	_settings->kI = 0.0;
-	_settings->kD = 0.0;
-	_settings->kF = 0.0;
-	_settings->setpoint = 0;
-	_settings->outputFilter = 0.1;
+// void FPID::init()
+// {
+// 	_settings->kP = 1.0;
+// 	_settings->kI = 0.0;
+// 	_settings->kD = 0.0;
+// 	_settings->kF = 0.0;
+// 	_settings->setpoint = 0;
+// 	_settings->outputFilter = 0.1;
 
-    _maxIOutput=0;
-	_errorsum = 0.0;
-	_maxOutput=0;
-	_minOutput=0;
-    _prv_input = NAN; // marks first run
-    _prv_output = NAN;
+//     _maxIOutput=0;
+// 	_errorsum = 0.0;
+// 	_maxOutput=0;
+// 	_minOutput=0;
+//     _prv_input = NAN; // marks first run
+//     _prv_output = NAN;
 
-	_outputRampRate = 0;
-	_setpointRate = NAN;
-};
+// 	_outputRampRate = 0;
+// 	_setpointRate = NAN;
+// };
 
 /**
  * Aligns the internal state with the current output
@@ -47,9 +48,13 @@ void FPID::alignOutput()
     _prv_input = NAN;
     _prv_output = NAN;
 
+	clamp(_output_ptr, _minOutput, _maxIOutput);
+
     // calculate (estimate) the required integral sum to obtain current output
     // i.e.: take over current output
-	_errorsum = *_output - forwardTerm();
+	_errorsum = *_output_ptr - forwardTerm();
+
+	clamp(&_errorsum, -1*_maxIOutput, _maxIOutput);
 };
 
 /**Set the maximum output value contributed by the I component of the system
@@ -100,13 +105,19 @@ void FPID::setOutputLimits(const double minimum, const double maximum)
 /** Calculate the PID value needed to hit the target setpoint.
 * Automatically re-calculates the output at each call.
 * @param dt Time differential between calls
-* @return whether the output is clamped or the intergral has wound up: status
+* @return true if in-loop and not wound-up
 */
 bool FPID::calculate(const double dt)
 {
+	if(!(dt > 0.0))
+	{
+		// WARNING(" dt = %f", dt);
+		return true;
+	};
+	
     // Sample settings for this loop
-	double sp = _settings->setpoint;
-    double input = *_input;
+	double sp = _settings_ptr->setpoint;
+    double input = *_input_ptr;
 
 	//Ramp the setpoint used for calculations if user has opted to do so
     sp = clamp(&sp, input - _setpointRate, input + _setpointRate);
@@ -118,14 +129,16 @@ bool FPID::calculate(const double dt)
 	double Foutput = forwardTerm();
 
 	//Calculate P term
-	double Poutput = _settings->kP * error;
+	double Poutput = _settings_ptr->kP * error;
+
+    // First run/sync
+    if(isnan(_prv_input))
+        _prv_input = input;
 
 	//Calculate D Term, derrivative on measurement
 	//Note, this is negative. this actually "slows" the system if it's doing
 	//the correct thing, and small values helps prevent output spikes and overshoot
-    if(_prv_input == NAN)
-        _prv_input = input;
-	double Doutput = _settings->kD * (input - _prv_input) / dt;
+	double Doutput = _settings_ptr->kD * (input - _prv_input) / dt;
 	_prv_input = input;
 
 	//The Iterm is more complex. There's several things to factor in to make it easier to deal with.
@@ -137,7 +150,7 @@ bool FPID::calculate(const double dt)
 
 	// If all good, increase integral
 	if(!freeze_integral)
-		_errorsum += _settings->kI * error * dt;
+		_errorsum += _settings_ptr->kI * error * dt;
 
 	// 3. maxIoutput restricts the amount of output contributed by the Iterm.
     clamp(&_errorsum, -1*_maxIOutput, _maxIOutput);
@@ -145,33 +158,34 @@ bool FPID::calculate(const double dt)
 	// Now our I output term is just the sum as the I factor is already processed while adding to the sum previously
 	double Ioutput = _errorsum;
 
-    // First run?
-    if(_prv_output == NAN)
-        _prv_output = *_output;
 
 	//And, finally, we can just add the terms up
 	double output = Foutput + Poutput + Ioutput + Doutput;
+	// DBG(" FPID = %f + %f + %f + %f = %f", Foutput, Poutput, Ioutput, Doutput, output);
+
+    // First run/sync
+    if(isnan(_prv_output))
+        _prv_output = *_output_ptr;
 
 	// Limit the output by ramprate
 	_outputClampedByRamprate = clamp(&output, 
         _prv_output - _outputRampRate, 
         _prv_output + _outputRampRate);
-	
+
 	// Limit the output by min/maxOutput
 	_outputClampedByMinMax = clamp(&output, _minOutput, _maxOutput);
 
 	// Filter the Output
-    //FIXME: NAN
-	output = _prv_output * _settings->outputFilter + output*(1-_settings->outputFilter);
+	output = _prv_output * _settings_ptr->outputFilter + output*(1-_settings_ptr->outputFilter);
 	_prv_output = output;
 
-    *_output = output;
-	return freeze_integral;
+    *_output_ptr = output;
+	return !freeze_integral;
 };
 
 double FPID::forwardTerm()
 {
-    return _settings->kF * _settings->setpoint;
+    return _settings_ptr->kF * _settings_ptr->setpoint;
 };
 
 /**
