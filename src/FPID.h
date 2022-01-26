@@ -22,7 +22,6 @@ class FPID
             double kD;
             double setpoint;
             double outputFilter;
-            bool   active;
         } fpid_settings_t;
 
         FPID(fpid_settings_t* s, double* input, double* output);
