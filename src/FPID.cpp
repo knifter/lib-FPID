@@ -109,9 +109,9 @@ void FPID::setOutputLimits(const double minimum, const double maximum)
 */
 bool FPID::calculate(const double dt)
 {
-	if(!(dt > 0.0))
+	if(!(dt > 0.0) || isnan(dt))
 	{
-		// WARNING(" dt = %f", dt);
+		WARNING(" dt = %f", dt);
 		return true;
 	};
 	
