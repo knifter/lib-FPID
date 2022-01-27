@@ -126,7 +126,7 @@ bool FPID::calculate(const double dt)
 	};
 
 	//Ramp the setpoint used for calculations if user has opted to do so
-    sp = clamp(&sp, input - _setpointRate, input + _setpointRate);
+    clamp(&sp, input - _setpointRange, input + _setpointRange);
 
 	//Do the simple parts of the calculations
 	double error = sp - input;
@@ -153,6 +153,7 @@ bool FPID::calculate(const double dt)
 	// 3. prevent windup by not increasing errorSum if we're already running against our max Ioutput
 	// 3b. But only if the outputclamp and error have the same sign (direction)
 	bool freeze_integral = _outputClampedByRamprate || (_outputClampedByMinMax && _outputClampedByMinMax*error > 0);
+	// DBG("freeze = %d, ramp(%d), minmax(%d) (%f)", freeze_integral, _outputClampedByRamprate, _outputClampedByMinMax, _outputClampedByMinMax*error);
 
 	// If all good, increase integral
 	if(!freeze_integral)
@@ -164,10 +165,9 @@ bool FPID::calculate(const double dt)
 	// Now our I output term is just the sum as the I factor is already processed while adding to the sum previously
 	double Ioutput = _errorsum;
 
-
 	//And, finally, we can just add the terms up
-	double output = Foutput + Poutput + Ioutput + Doutput;
-	// DBG(" FPID = %f + %f + %f + %f = %f", Foutput, Poutput, Ioutput, Doutput, output);
+	double output = Foutput + Poutput + Ioutput - Doutput;
+	// DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", error, Foutput, Poutput, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
 
     // First run/sync
     if(isnan(_prv_output))

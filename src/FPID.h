@@ -59,12 +59,12 @@ class FPID
     	void setMaxIOutput(const double);
 
         // Ramp the setpoint no further than this from the input
-        /** Set a limit on how far the setpoint can be from the current position
-         *  Can simplify tuning by helping tuning over a small range applies to a much larger range.
-         *  this->limits the reactivity of P term, and restricts impact of large D term
+        /** Set a limit on how far the setpoint can be from the current input value
+         *  Can simplify tuning by helping tuning over a small range applied to a much larger range.
+         *  this limits the reactivity of P term, and restricts impact of large D term
          *  during large setpoint adjustments. Increases lag and I term if range is too small.
          */
-	    void setSetpointRate(const double);
+	    void setSetpointRange(const double);
     
     protected:
         // Initialize the settings struct, resets values. Don't call if settings come from NVS
@@ -72,7 +72,7 @@ class FPID
 	    void set_output(double);
 
         // pointers to the outside world
-        fpid_settings_t *_settings_ptr = nullptr;
+        fpid_settings_t *_settings_ptr;
         double *_input_ptr;
         double *_output_ptr;
 
@@ -80,7 +80,7 @@ class FPID
         double _maxOutput = INFINITY;
         double _outputRampRate = INFINITY;
 
-        double _setpointRate = INFINITY;
+        double _setpointRange = INFINITY;   // Can deviate this much from 'input'
         double _maxIOutput = INFINITY;
 
         // Forward term model, o
@@ -91,8 +91,8 @@ class FPID
     	double _prv_input;
         double _prv_output;
     	
-    	bool _outputClampedByRamprate = 0;
-	    bool _outputClampedByMinMax = 0;
+    	int _outputClampedByRamprate = 0;
+	    int _outputClampedByMinMax = 0;
 };
 
 class FPIDWrapped : public FPID
