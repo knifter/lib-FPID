@@ -111,7 +111,7 @@ bool FPID::calculate(const double dt)
 {
 	if(!(dt > 0.0) || isnan(dt))
 	{
-		WARNING(" dt = %f", dt);
+		// WARNING(" dt = %f", dt);
 		return true;
 	};
 	
@@ -121,7 +121,7 @@ bool FPID::calculate(const double dt)
 
 	if(isnan(input))
 	{
-		ERROR("input: NAN");
+		// ERROR("input: NAN");
 		return false;
 	};
 
