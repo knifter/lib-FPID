@@ -119,6 +119,12 @@ bool FPID::calculate(const double dt)
 	double sp = _settings_ptr->setpoint;
     double input = *_input_ptr;
 
+	if(isnan(input))
+	{
+		ERROR("input: NAN");
+		return false;
+	};
+
 	//Ramp the setpoint used for calculations if user has opted to do so
     sp = clamp(&sp, input - _setpointRate, input + _setpointRate);
 
