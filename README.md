@@ -1,25 +1,25 @@
 # F-PID
-My implementation of a simple PID loop with code taken and ideas from
- - MiniPID by tekdemo (https://github.com/tekdemo/MiniPID) and 
- - the Arduino-PID-library from br3tbb (https://github.com/br3ttb/Arduino-PID-Library)
+My implementation of a simple PID loop with code and ideas combined from:
+ - [MiniPID by tekdemo](https://github.com/tekdemo/MiniPID)
+ - [the Arduino-PID-library from br3tbb](https://github.com/br3ttb/Arduino-PID-Library)
+ - [brettbeauregards's blog](http://brettbeauregard.com/blog/)
+ - [VEX Robotics Wiki](https://www.vexwiki.org/programming/controls_algorithms)
+ 
 and the following improvements:
- - Feed-Forward term, base class uses a simple kF * SetPoint
- - Derivative on measurement (derivative on setpoint is a forward term)
-
-While I like the MiniPID interface and its ramping capabilities it lacks the improvements made by br3tbb (http://brettbeauregard.com/) in his blog. By combining the two I hope to achieve best of both worlds. 
+ - [x] Feed-Forward term, base class uses a simple kF * SetPoint
+ - [x] Derivative on measurement (derivative on setpoint is a forward term: dsetpoint/dt)
+ - [x] external variables: allows to store the settings_t struct in a global struct which is stored in NVS. As most applications will have an interface to edit these..
+ - [ ] Take-back-half
 
 ## Improvements wishlist
-- [ ] Proportional on Measurement together with Propoertional on Error
+- [x] Proportional on Measurement
 - [ ] Forward term learning: By storing the output for a certain amount of setpoints an estimate (interpolation) can be made for a forward term.
 - [ ] Some kind of AutoTuning
 
 ## Design Goals
-- [ ] Provide all expected features of a quality PID loop. (never complete)
-- Allow for stability without extensive tuning. 
-- Be simple to integrate into projects without code restructuring
-- Be easy to "chain", sending the output of one PID to the input of another. 
-- Be flexible enough that any provided functions can be used in isolation. 
-- Be simple enough to be used in "transient" or one-off control sequences 
+- Combining all the features and improvements on software PID loops which I find usefull
+- Good integration with the application: Probably a (G)UI and some NVS
+- Flexible and configurable for most cases
 
 ## Features
 ##### PID Functions
@@ -51,6 +51,7 @@ The I term and summed error will never increase if the system is already doing e
 No need for lots of convoluted calculation functions, or asyncronous calculation modes. After configuration, `getOutput()` is probably the only function you need. 
 
 ## Usage
+OUTDATED
 A bare bones PID system could look like this. 
 
 ``` cpp
