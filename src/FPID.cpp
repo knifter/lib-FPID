@@ -15,7 +15,7 @@
 int clamp(double *value, const double min, const double max);
 bool isbetween(const double value, const double min, const double max);
 
-FPID::FPID(fpid_settings_t *s, double *input, double *output) :
+FPID::FPID(fpid_settings_t *s, const double *input, double *output) :
     _settings_ptr(s), _input_ptr(input), _output_ptr(output)
 {
 };

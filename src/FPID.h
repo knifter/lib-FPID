@@ -24,7 +24,7 @@ class FPID
             double outputFilter;
         } fpid_settings_t;
 
-        FPID(fpid_settings_t* s, double* input, double* output);
+        FPID(fpid_settings_t* s, const double* input, double* output);
 
         // Aligns the output of the controller with the current output
         // Call this before (re)starting the PID loop to prevent a large start-up kick
@@ -32,8 +32,8 @@ class FPID
         bool calculate(const double dt = 1.0);
 
         // Primary interface, with external pointers
-        void setInputPtr(double* input);
-        void setOuputPtr(double* output);
+        void setInputPtr(const double* input) { _input_ptr = input; };
+        void setOuputPtr(double* output) { _output_ptr = output; };
 
         // Minimum and Maximum output values
 	    void setOutputLimits(const double);
@@ -73,7 +73,7 @@ class FPID
 
         // pointers to the outside world
         fpid_settings_t *_settings_ptr;
-        double *_input_ptr;
+        const double *_input_ptr;
         double *_output_ptr;
 
         double _minOutput = -INFINITY;
