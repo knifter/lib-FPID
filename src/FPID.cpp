@@ -181,8 +181,8 @@ bool FPID::calculate(const double dt)
 	// Limit the output by min/maxOutput
 	_outputClampedByMinMax = clamp(&output, _minOutput, _maxOutput);
 
-	// Filter the Output
-	output = _prv_output * _settings_ptr->outputFilter + output*(1-_settings_ptr->outputFilter);
+	// Filter the Output: 1 = old output, 0 = new output
+	output = _prv_output * (1-_settings_ptr->output_filter) + output*_settings_ptr->output_filter;
 	_prv_output = output;
 
     *_output_ptr = output;
