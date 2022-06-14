@@ -22,6 +22,8 @@ class FPID
             double kD;
             double setpoint;
             double output_filter; // 0 = No filter
+            double dterm_filter; // not yet implemented
+            double takebackhalf; // not yet implemented
         } fpid_settings_t;
 
         FPID(fpid_settings_t* s, const double* input, double* output);
