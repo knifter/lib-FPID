@@ -105,14 +105,15 @@ void FPID::setOutputLimits(const double minimum, const double maximum)
 /** Calculate the PID value needed to hit the target setpoint.
 * Automatically re-calculates the output at each call.
 * @param dt Time differential between calls
-* @return true if in-loop and not wound-up
+* @return true if in-loop and not wound-up (!integral frozen)
 */
 bool FPID::calculate(const double dt)
 {
 	if(!(dt > 0.0) || isnan(dt))
 	{
 		// WARNING(" dt = %f", dt);
-		return true;
+        *_output_ptr = NAN;
+		return false;
 	};
 	
     // Sample settings for this loop
@@ -122,6 +123,7 @@ bool FPID::calculate(const double dt)
 	if(isnan(input))
 	{
 		// ERROR("input: NAN");
+        *_output_ptr = NAN;
 		return false;
 	};
 
