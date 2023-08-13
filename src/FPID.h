@@ -97,29 +97,29 @@ class FPID
 	    int _outputClampedByMinMax = 0;
 };
 
-class FPIDWrapped : public FPID
-{
-    public:
-        FPIDWrapped() : FPID(&_settings_inst, &_input_inst, &_output_inst) {};
+// class FPIDWrapped : public FPID
+// {
+//     public:
+//         FPIDWrapped() : FPID(&_settings_inst, &_input_inst, &_output_inst) {};
 
-        // Primary interface, internal values
-        void setInput(const double input) { _input_inst = input; };
-        void setSetpoint(const double setpoint) { _settings_inst.setpoint = setpoint; };
-        double getSetpoint() { return _settings_inst.setpoint; };
+//         // Primary interface, internal values
+//         void setInput(const double input) { _input_inst = input; };
+//         void setSetpoint(const double setpoint) { _settings_inst.setpoint = setpoint; };
+//         double getSetpoint() { return _settings_inst.setpoint; };
 
-        void setParameters(const double p, const double i, const double d) { setParameters(p, i, d, _settings_inst.kF); };
-        void setParameters(const double p, const double i, const double d, const double f)
-        { 
-            _settings_inst.kP = p; 
-            _settings_inst.kI = i; 
-            _settings_inst.kD = d; 
-            _settings_inst.kF = f; 
-        };
+//         void setParameters(const double p, const double i, const double d) { setParameters(p, i, d, _settings_inst.kF); };
+//         void setParameters(const double p, const double i, const double d, const double f)
+//         { 
+//             _settings_inst.kP = p; 
+//             _settings_inst.kI = i; 
+//             _settings_inst.kD = d; 
+//             _settings_inst.kF = f; 
+//         };
 
-    private:
-        FPID::fpid_settings_t _settings_inst;
-        double _input_inst;
-        double _output_inst;
-};
+//     private:
+//         FPID::fpid_settings_t _settings_inst;
+//         double _input_inst;
+//         double _output_inst;
+// };
 
 #endif /* __MINIPID_H_ */

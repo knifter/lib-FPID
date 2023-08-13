@@ -115,7 +115,7 @@ bool FPID::calculate(const double dt)
         *_output_ptr = NAN;
 		return false;
 	};
-	
+
     // Sample settings for this loop
 	double sp = _settings_ptr->setpoint;
     double input = *_input_ptr;
@@ -132,6 +132,15 @@ bool FPID::calculate(const double dt)
 
 	//Do the simple parts of the calculations
 	double error = sp - input;
+
+#ifdef FPID_ROTATIONAL
+	// Rotational correction, error can never be bigger than +-180
+	//  and we also need to move to the shortes rotation side
+	if(error > 180)
+		error -= 360;
+	if(error < -180)
+		error += 360;
+#endif
 
 	//Calculate F output. Notice, this depends only on the setpoint, and not the error.
 	double Foutput = forwardTerm();
