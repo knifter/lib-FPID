@@ -21,7 +21,17 @@ class FPID
             double kI;
             double kD;
             double setpoint;
+
+            /**Set a filter on the output to reduce sharp oscillations.
+             * 0.1 is likely a sane starting value. 
+             * Larger values P and D oscillations, but force larger I values.
+             * Uses an exponential rolling sum filter, according to a simple
+             * <pre>output*(1-strength)*sum(0..n){output*strength^n}</pre>
+             * output valid between [0..1), meaning [current output only.. historical output only)
+             */
             double output_filter; // 0 = No filter
+
+
             double dterm_filter; // not yet implemented
             double takebackhalf; // not yet implemented
         } fpid_settings_t;
@@ -40,10 +50,13 @@ class FPID
         // Minimum and Maximum output values
 	    void setOutputLimits(const double);
 	    void setOutputLimits(const double, const double);
-	    void getOutputLimits(double*, double*);
+	    // void getOutputLimits(double*, double*);
 	    
+        // // Set the maximum rate the output can increase per cycle.
+	    // void setOutputRampRate(const double);
+	    // void setOutputFilter(const double);
         // Set the maximum rate the output can increase per cycle.
-	    void setOutputRampRate(const double);
+	    // void setOutputRampRate(const double);
 
         /**Set a filter on the output to reduce sharp oscillations.
          * 0.1 is likely a sane starting value. 
@@ -52,7 +65,10 @@ class FPID
          * <pre>output*(1-strength)*sum(0..n){output*strength^n}</pre>
          * output valid between [0..1), meaning [current output only.. historical output only)
          */
-	    void setOutputFilter(const double);
+	    // void setOutputFilter(const double);
+        // // Set the maximum rate the output can increase per cycle.
+	    // void setOutputRampRate(const double);
+	    // void setOutputFilter(const double);
 
         /**Set the maximum output value contributed by the I component of the system
          * this can be used to prevent large windup issues and make tuning simpler
@@ -60,14 +76,6 @@ class FPID
          */
     	void setMaxIOutput(const double);
 
-        // Ramp the setpoint no further than this from the input
-        /** Set a limit on how far the setpoint can be from the current input value
-         *  Can simplify tuning by helping tuning over a small range applied to a much larger range.
-         *  this limits the reactivity of P term, and restricts impact of large D term
-         *  during large setpoint adjustments. Increases lag and I term if range is too small.
-         */
-	    void setSetpointRange(const double);
-    
     protected:
         // Initialize the settings struct, resets values. Don't call if settings come from NVS
         // void init();
@@ -82,6 +90,7 @@ class FPID
         double _maxOutput = INFINITY;
         double _outputRampRate = INFINITY;
 
+        // TODO: move these to _settings
         double _setpointRange = INFINITY;   // Can deviate this much from 'input'
         double _maxIOutput = INFINITY;
 
