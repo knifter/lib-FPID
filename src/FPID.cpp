@@ -155,7 +155,12 @@ bool FPID::calculate(const double dt)
 	//Calculate D Term, derrivative on measurement
 	//Note, this is negative. this actually "slows" the system if it's doing
 	//the correct thing, and small values helps prevent output spikes and overshoot
-	double Doutput = _settings_ptr->kD * (input - _prv_input) / dt;
+	// D-term filter can be applied as well if PID loop runs fast and input changes (discretely) slow
+	double dterm = (input - _prv_input) / dt;
+	dterm = dterm*(1 - _settings_ptr->d_filter) + _prv_dterm*_settings_ptr->d_filter;
+	double Doutput = _settings_ptr->kD * dterm;
+
+	_prv_dterm = dterm;
 	_prv_input = input;
 
 	//The Iterm is more complex. There's several things to factor in to make it easier to deal with.
@@ -202,7 +207,7 @@ bool FPID::calculate(const double dt)
 
 double FPID::forwardTerm()
 {
-    return _settings_ptr->kF * _settings_ptr->setpoint;
+    return _settings_ptr->kF * (_settings_ptr->setpoint- _settings_ptr->kF_offset);
 };
 
 /**

@@ -17,20 +17,31 @@ class FPID
         typedef struct
         {
             double kF;
+            double kF_offset;
             double kP;
             double kI;
             double kD;
             double setpoint;
+
+            /**Set a filter on the D-term to low-pass it's output for fast running loops with
+             * slow changing values. This will make the D-term behave more constant instead off on/off.
+             * 0 is perfectly fine but if the D-term turns on-and-off all the time, increase filtering
+             * Uses an exponential rolling sum filter, according to a simple
+             * <pre>d*(1-strength)*sum(0..n){d*strength^n}</pre>
+             * input valid between [0..1), meaning [fresh d-term only.. historical d-term only)
+             * 0 = No filter
+             */
+            double d_filter;
 
             /**Set a filter on the output to reduce sharp oscillations.
              * 0.1 is likely a sane starting value. 
              * Larger values P and D oscillations, but force larger I values.
              * Uses an exponential rolling sum filter, according to a simple
              * <pre>output*(1-strength)*sum(0..n){output*strength^n}</pre>
-             * output valid between [0..1), meaning [current output only.. historical output only)
+             * input valid between [0..1), meaning [current output only.. historical output only)
+             * 0 = No filter
              */
             double output_filter; // 0 = No filter
-
 
             double dterm_filter; // not yet implemented
             double takebackhalf; // not yet implemented
@@ -79,7 +90,7 @@ class FPID
     protected:
         // Initialize the settings struct, resets values. Don't call if settings come from NVS
         // void init();
-	    void set_output(double);
+	    // void set_output(double);
 
         // pointers to the outside world
         fpid_settings_t *_settings_ptr;
@@ -101,6 +112,7 @@ class FPID
         double _errorsum;
     	double _prv_input;
         double _prv_output;
+        double _prv_dterm;
     	
     	int _outputClampedByRamprate = 0;
 	    int _outputClampedByMinMax = 0;
