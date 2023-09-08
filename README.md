@@ -10,7 +10,6 @@ and the following improvements:
  - [x] Derivative on measurement (derivative on setpoint is a forward term: dsetpoint/dt)
  - [x] external variables: allows to store the settings_t struct in a global struct which is stored in NVS. As most applications will have an interface to edit these..
  - [ ] Take-back-half
- - [ ] More intricate terms: Root-P, Double derivative, D-setpoint and more
 
 ## Improvements wishlist
 - [x] Proportional on Measurement
