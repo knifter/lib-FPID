@@ -6,14 +6,19 @@ My implementation of a simple PID loop with code and ideas combined from:
  - [VEX Robotics Wiki](https://www.vexwiki.org/programming/controls_algorithms)
  
 and the following improvements:
- - [x] Feed-Forward term, base class uses a simple kF * SetPoint
+ - [x] Feed-Forward term, base class uses a simple kF*(SetPoint - F-offset)
  - [x] Derivative on measurement (derivative on setpoint is a forward term: dsetpoint/dt)
  - [x] external variables: allows to store the settings_t struct in a global struct which is stored in NVS. As most applications will have an interface to edit these..
  - [ ] Take-back-half
+ - [ ] More intricate terms: Root-P, Double derivative, D-setpoint and more
 
 ## Improvements wishlist
 - [x] Proportional on Measurement
 - [ ] Forward term learning: By storing the output for a certain amount of setpoints an estimate (interpolation) can be made for a forward term.
+- [ ] Root-P
+- [ ] Declining D on big errors
+- [ ] Double D
+- [ ] Derivative on setpoint (is a forward term)
 - [ ] Some kind of AutoTuning
 
 ## Design Goals
