@@ -155,14 +155,19 @@ bool FPID::calculate(const double dt)
 	_prv_setpoint = setpoint;
 #endif
 
-	//Calculate P term
+	/*********** PROPORTIONAL TERMS ***********************************************************************************/
 	double Poutput = _settings_ptr->kP * error;
 
+#ifdef FPID_PROOT
+	double PRoutput = _settings_ptr->kPR * sqrt(error);
+#endif
+
+	/*********** DERIVATIVE TERMS ***********************************************************************************/
     // First run/sync
     if(isnan(_prv_input))
         _prv_input = input;
-
-	//Calculate D Term, derrivative on measurement
+		
+	//Calculate Derrivative-on-measurement
 	//Note, this is negative. this actually "slows" the system if it's doing
 	//the correct thing, and small values helps prevent output spikes and overshoot
 	// D-term filter can be applied as well if PID loop runs fast and input changes (discretely) slow
@@ -208,6 +213,9 @@ bool FPID::calculate(const double dt)
 #endif
 #ifdef FPID_FORWARD_DSETPOINT
 	output += Foutput_dsetpoint;
+#endif
+#ifdef FPID_PROOT
+	output += PRoutput;
 #endif
 
     // First run/sync

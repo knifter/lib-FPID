@@ -24,6 +24,9 @@ class FPID
             double kDsetpoint;
 #endif
             double kP;
+#ifdef FPID_P_ROOT
+            double kPR;
+#endif
             double kI;
             double kD;
             double setpoint;
