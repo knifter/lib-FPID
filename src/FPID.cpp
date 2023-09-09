@@ -145,6 +145,15 @@ bool FPID::calculate(const double dt)
     double Foutput_linear = _settings_ptr->kF * (_settings_ptr->setpoint- _settings_ptr->kF_offset);
 #endif // FPID_FORWARD_LINEAR
 
+#ifdef FPID_FORWARD_DSETPOINT
+	//Calculate Derivative-on-setpoint (which forward term as it depens solely on SP)
+
+	if(isnan(_prv_setpoint))
+		_prv_setpoint = setpoint;
+
+	double Foutput_dsetpoint = _settings_ptr->kDsetpoint*(setpoint - _prv_setpoint);
+	_prv_setpoint = setpoint;
+#endif
 
 	//Calculate P term
 	double Poutput = _settings_ptr->kP * error;
@@ -196,6 +205,9 @@ bool FPID::calculate(const double dt)
 	double output = Poutput + Ioutput + Doutput;
 #ifdef FPID_FORWARD_LINEAR
 	output += Foutput_linear;
+#endif
+#ifdef FPID_FORWARD_DSETPOINT
+	output += Foutput_dsetpoint;
 #endif
 
     // First run/sync

@@ -20,6 +20,9 @@ class FPID
             double kF;
             double kF_offset;
 #endif
+#ifdef FPID_FORWARD_DSETPOINT
+            double kDsetpoint;
+#endif
             double kP;
             double kI;
             double kD;
