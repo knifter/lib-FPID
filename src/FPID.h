@@ -11,6 +11,18 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <config.h>
+
+// Optional features, define in config.h in your project
+// #define FPID_ROTATIONAL
+// #define FPID_FORWARD_LINEAR
+// #define FPID_FORWARD_DSETPOINT
+// #define FPID_P_ROOT
+// #define FPID_D_FILTER
+// #define FPID_DOUBLE_D
+// #define FPID_OUTPUT_RAMPRATE
+// #define FPID_OUTPUT_FILTER
+
 class FPID
 {
     public:
@@ -58,7 +70,6 @@ class FPID
             double output_filter; // 0 = No filter
 #endif
 
-            double dterm_filter; // not yet implemented
             double takebackhalf; // not yet implemented
         } fpid_settings_t;
 
@@ -120,16 +131,16 @@ class FPID
         double _setpointRange = INFINITY;   // Can deviate this much from 'input'
         double _maxIOutput = INFINITY;
 
-        // Forward term model, o
-        double forwardTerm();
-
         // Internal state variables
-        double _errorsum;
-    	double _prv_input;
-        double _prv_output;
-        double _prv_dterm;
+        double _errorsum = NAN;
+    	double _prv_input = NAN;
+        double _prv_setpoint = NAN;
+        double _prv_output = NAN;
+        double _prv_dterm = NAN;
     	
+#ifdef FPID_OUTPUT_RAMPRATE
     	int _outputClampedByRamprate = 0;
+#endif
 	    int _outputClampedByMinMax = 0;
 };
 

@@ -189,6 +189,7 @@ bool FPID::calculate(const double dt)
 	_prv_dterm = dterm;
 	_prv_input = input;
 
+	/*********** INTEGRAL TERMS ***********************************************************************************/
 	//The Iterm is more complex. There's several things to factor in to make it easier to deal with.
 	// 1. The multiplication with I-gain is done when adding to the sum, this prevents the bump on I-gain changes
 	// 2. prevent further windup by not increasing errorSum if output=maxOutput or output=minOutput
@@ -199,13 +200,14 @@ bool FPID::calculate(const double dt)
 	if(_outputClampedByRamprate)
 		freeze_integral = true;
 #endif
-	DBG("freeze = %d, ramp(%d), minmax(%d) (%f)", freeze_integral, 
-#ifdef FPID_OUTPUT_RAMPRATE
-		_outputClampedByRamprate,
-#else
-		0,
-#endif
-		 _outputClampedByMinMax, _outputClampedByMinMax*error);
+
+// 	DBG("freeze = %d, ramp(%d), minmax(%d) (%f)", freeze_integral, 
+// #ifdef FPID_OUTPUT_RAMPRATE
+// 		_outputClampedByRamprate,
+// #else
+// 		0,
+// #endif
+// 		 _outputClampedByMinMax, _outputClampedByMinMax*error);
 	
 
 	// If errorsum is NAN we need to align it with the current _output not cause a big jump
@@ -245,6 +247,19 @@ bool FPID::calculate(const double dt)
 	output += DDoutput;
 #endif
 
+	DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", error, 
+		0
+#ifdef FPID_FORWARD_LINEAR
+		+ Foutput_linear
+#endif
+#ifdef FPID_FORWARD_DSETPOINT
+		+ Foutput_dsetpoint,
+#endif
+		, Poutput
+#ifdef FPID_PROOT
+		+ PRoutput
+#endif
+		, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
 
     // First run/sync
     if(isnan(_prv_output))
@@ -268,11 +283,6 @@ bool FPID::calculate(const double dt)
 
     *_output_ptr = output;
 	return !freeze_integral;
-};
-
-double FPID::forwardTerm()
-{
-    return _settings_ptr->kF * (_settings_ptr->setpoint- _settings_ptr->kF_offset);
 };
 
 /**
