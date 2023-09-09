@@ -176,6 +176,9 @@ bool FPID::calculate(const double dt)
 	if(isnan(_prv_dterm))
 		_prv_dterm = dterm;
 
+#ifdef FPID_D_FILTER
+	dterm = dterm*(1 - _settings_ptr->D_filter) + _prv_dterm*_settings_ptr->D_filter;
+#endif
 	double Doutput = _settings_ptr->kD * dterm;
 
 	_prv_dterm = dterm;

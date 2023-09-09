@@ -39,7 +39,9 @@ class FPID
              * input valid between [0..1), meaning [fresh d-term only.. historical d-term only)
              * 0 = No filter
              */
-            double d_filter;
+#ifdef FPID_D_FILTER
+            double D_filter;
+#endif
 
             /**Set a filter on the output to reduce sharp oscillations.
              * 0.1 is likely a sane starting value. 
