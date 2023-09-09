@@ -16,8 +16,10 @@ class FPID
     public:
         typedef struct
         {
+#ifdef FPID_FORWARD_LINEAR
             double kF;
             double kF_offset;
+#endif
             double kP;
             double kI;
             double kD;

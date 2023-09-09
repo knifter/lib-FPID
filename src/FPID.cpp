@@ -114,7 +114,7 @@ bool FPID::calculate(const double dt)
 	};
 
     // Sample settings for this loop
-	double sp = _settings_ptr->setpoint;
+	double setpoint = _settings_ptr->setpoint;
     double input = *_input_ptr;
 
 	if(isnan(input))
@@ -125,10 +125,10 @@ bool FPID::calculate(const double dt)
 	};
 
 	//Ramp the setpoint used for calculations if user has opted to do so
-    clamp(&sp, input - _setpointRange, input + _setpointRange);
+    clamp(&setpoint, input - _setpointRange, input + _setpointRange);
 
 	//Do the simple parts of the calculations
-	double error = sp - input;
+	double error = setpoint - input;
 
 #ifdef FPID_ROTATIONAL
 	// Rotational correction, error can never be bigger than +-180
@@ -139,8 +139,12 @@ bool FPID::calculate(const double dt)
 		error += 360;
 #endif
 
+	/*********** FORWARD TERMS ***********************************************************************************/
 	//Calculate F output. Notice, this depends only on the setpoint, and not the error.
-	double Foutput = forwardTerm();
+#ifdef FPID_FORWARD_LINEAR
+    double Foutput_linear = _settings_ptr->kF * (_settings_ptr->setpoint- _settings_ptr->kF_offset);
+#endif // FPID_FORWARD_LINEAR
+
 
 	//Calculate P term
 	double Poutput = _settings_ptr->kP * error;
@@ -189,8 +193,10 @@ bool FPID::calculate(const double dt)
 	double Ioutput = _errorsum;
 
 	//And, finally, we can just add the terms up
-	double output = Foutput + Poutput + Ioutput - Doutput;
-	// DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", error, Foutput, Poutput, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
+	double output = Poutput + Ioutput + Doutput;
+#ifdef FPID_FORWARD_LINEAR
+	output += Foutput_linear;
+#endif
 
     // First run/sync
     if(isnan(_prv_output))
