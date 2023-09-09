@@ -171,8 +171,11 @@ bool FPID::calculate(const double dt)
 	//Note, this is negative. this actually "slows" the system if it's doing
 	//the correct thing, and small values helps prevent output spikes and overshoot
 	// D-term filter can be applied as well if PID loop runs fast and input changes (discretely) slow
-	double dterm = (input - _prv_input) / dt;
-	dterm = dterm*(1 - _settings_ptr->d_filter) + _prv_dterm*_settings_ptr->d_filter;
+	double dterm = -1 * (input - _prv_input) / dt;
+
+	if(isnan(_prv_dterm))
+		_prv_dterm = dterm;
+
 	double Doutput = _settings_ptr->kD * dterm;
 
 	_prv_dterm = dterm;
