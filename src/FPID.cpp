@@ -50,11 +50,8 @@ void FPID::alignOutput()
 
 	clamp(_output_ptr, _minOutput, _maxOutput);
 
-    // calculate (estimate) the required integral sum to obtain current output
-    // i.e.: take over current output
-	_errorsum = *_output_ptr - forwardTerm();
-
-	clamp(&_errorsum, -1*_maxIOutput, _maxIOutput);
+	// Reset the errorsum, will be recovered in calculate() from _output
+	_errorsum = NAN;
 };
 
 /**Set the maximum output value contributed by the I component of the system
@@ -168,8 +165,18 @@ bool FPID::calculate(const double dt)
 	// 2. prevent further windup by not increasing errorSum if output=maxOutput or output=minOutput
 	// 3. prevent windup by not increasing errorSum if we're already running against our max Ioutput
 	// 3b. But only if the outputclamp and error have the same sign (direction)
-	bool freeze_integral = _outputClampedByRamprate || (_outputClampedByMinMax && _outputClampedByMinMax*error > 0);
-	// DBG("freeze = %d, ramp(%d), minmax(%d) (%f)", freeze_integral, _outputClampedByRamprate, _outputClampedByMinMax, _outputClampedByMinMax*error);
+
+	// If errorsum is NAN we need to align it with the current _output not cause a big jump
+	if(isnan(_errorsum))
+	{
+		// Previous output must be the result of the intergral term + forward terms, we can run that backwards
+		//  and recover errorsum
+		_errorsum = *_output_ptr;
+#ifdef FPID_FORWARD_LINEAR
+		_errorsum -= Foutput_linear;
+#endif
+		// FPID_FORWARD_DSETPOINT is not needed as it is a D-term and can just be added this cycle
+	};
 
 	// If all good, increase integral
 	if(!freeze_integral)
