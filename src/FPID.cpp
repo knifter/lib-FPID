@@ -237,7 +237,9 @@ bool FPID::calculate(const double dt)
 	_outputClampedByMinMax = clamp(&output, _minOutput, _maxOutput);
 
 	// Filter the Output: 1 = old output (low-pass), 0 = new output, -1 = subtract old output (high-pass, not implemented yet)
+#ifdef FPID_OUTPUT_FILTER
 	output = output*(1 - _settings_ptr->output_filter) + _prv_output*_settings_ptr->output_filter;
+#endif
 	_prv_output = output;
 
     *_output_ptr = output;

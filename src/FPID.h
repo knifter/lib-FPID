@@ -51,7 +51,9 @@ class FPID
              * input valid between [0..1), meaning [current output only.. historical output only)
              * 0 = No filter
              */
+#ifdef FPID_OUTPUT_FILTER
             double output_filter; // 0 = No filter
+#endif
 
             double dterm_filter; // not yet implemented
             double takebackhalf; // not yet implemented
