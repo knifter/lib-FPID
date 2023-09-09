@@ -247,19 +247,19 @@ bool FPID::calculate(const double dt)
 	output += DDoutput;
 #endif
 
-	DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", error, 
-		0
-#ifdef FPID_FORWARD_LINEAR
-		+ Foutput_linear
-#endif
-#ifdef FPID_FORWARD_DSETPOINT
-		+ Foutput_dsetpoint,
-#endif
-		, Poutput
-#ifdef FPID_PROOT
-		+ PRoutput
-#endif
-		, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
+// 	DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", error, 
+// 		0
+// #ifdef FPID_FORWARD_LINEAR
+// 		+ Foutput_linear
+// #endif
+// #ifdef FPID_FORWARD_DSETPOINT
+// 		+ Foutput_dsetpoint,
+// #endif
+// 		, Poutput
+// #ifdef FPID_PROOT
+// 		+ PRoutput
+// #endif
+// 		, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
 
     // First run/sync
     if(isnan(_prv_output))
