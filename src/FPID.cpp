@@ -48,7 +48,7 @@ void FPID::alignOutput()
     _prv_input = NAN;
     _prv_output = NAN;
 
-	clamp(_output_ptr, _minOutput, _maxIOutput);
+	clamp(_output_ptr, _minOutput, _maxOutput);
 
     // calculate (estimate) the required integral sum to obtain current output
     // i.e.: take over current output
