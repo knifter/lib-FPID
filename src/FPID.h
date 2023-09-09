@@ -29,6 +29,9 @@ class FPID
 #endif
             double kI;
             double kD;
+#ifdef FPID_DOUBLE_D
+            double kDD;
+#endif
             double setpoint;
 
             /**Set a filter on the D-term to low-pass it's output for fast running loops with

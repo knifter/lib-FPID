@@ -181,6 +181,11 @@ bool FPID::calculate(const double dt)
 #endif
 	double Doutput = _settings_ptr->kD * dterm;
 
+#ifdef FPID_DOUBLE_D
+	double ddterm = (dterm - _prv_dterm) / dt;
+	double DDoutput = _settings_ptr->kDD * ddterm;
+#endif
+
 	_prv_dterm = dterm;
 	_prv_input = input;
 
@@ -236,6 +241,10 @@ bool FPID::calculate(const double dt)
 #ifdef FPID_PROOT
 	output += PRoutput;
 #endif
+#ifdef FPID_DOUBLE_D
+	output += DDoutput;
+#endif
+
 
     // First run/sync
     if(isnan(_prv_output))
