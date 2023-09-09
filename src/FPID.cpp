@@ -189,6 +189,19 @@ bool FPID::calculate(const double dt)
 	// 2. prevent further windup by not increasing errorSum if output=maxOutput or output=minOutput
 	// 3. prevent windup by not increasing errorSum if we're already running against our max Ioutput
 	// 3b. But only if the outputclamp and error have the same sign (direction)
+	bool freeze_integral = (_outputClampedByMinMax && _outputClampedByMinMax*error > 0);
+#ifdef FPID_OUTPUT_RAMPRATE
+	if(_outputClampedByRamprate)
+		freeze_integral = true;
+#endif
+	DBG("freeze = %d, ramp(%d), minmax(%d) (%f)", freeze_integral, 
+#ifdef FPID_OUTPUT_RAMPRATE
+		_outputClampedByRamprate,
+#else
+		0,
+#endif
+		 _outputClampedByMinMax, _outputClampedByMinMax*error);
+	
 
 	// If errorsum is NAN we need to align it with the current _output not cause a big jump
 	if(isnan(_errorsum))
@@ -228,10 +241,12 @@ bool FPID::calculate(const double dt)
     if(isnan(_prv_output))
         _prv_output = *_output_ptr;
 
+#ifdef FPID_OUTPUT_RAMPRATE
 	// Limit the output by ramprate
 	_outputClampedByRamprate = clamp(&output, 
         _prv_output - _outputRampRate, 
         _prv_output + _outputRampRate);
+#endif // FPID_OUTPUT_RAMPRATE
 
 	// Limit the output by min/maxOutput
 	_outputClampedByMinMax = clamp(&output, _minOutput, _maxOutput);
