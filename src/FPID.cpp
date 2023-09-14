@@ -230,7 +230,7 @@ bool FPID::calculate(const double dt)
     clamp(&_errorsum, -1*_maxIOutput, _maxIOutput);
 
 	// Now our I output term is just the sum as the I factor is already processed while adding to the sum previously
-	double Ioutput = _errorsum;
+	double Ioutput = (_settings_ptr->kI > 0.0) ? _errorsum : 0.0;
 
 	//And, finally, we can just add the terms up
 	double output = Poutput + Ioutput + Doutput;
