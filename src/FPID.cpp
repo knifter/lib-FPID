@@ -164,8 +164,8 @@ bool FPID::calculate(const double dt)
 
 	/*********** DERIVATIVE TERMS ***********************************************************************************/
     // First run/sync
-    if(isnan(_prv_input))
-        _prv_input = input;
+	if(isnan(_prv_input))
+		_prv_input = input;
 		
 	//Calculate Derrivative-on-measurement
 	//Note, this is negative. this actually "slows" the system if it's doing
