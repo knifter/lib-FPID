@@ -271,14 +271,20 @@ bool FPID::calculate(const double dt)
 		, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
 #endif // DEBUG_FPID
 
+#ifdef FPID_OUTPUT_RAMPRATE
+    // First run/sync:
+	// WARNING: if ramprate limited and isnan(_output_ptr), we'll keep outputting NaN, as that makes sense if ramprate is limited to prevent a big jump at turn-on.
     if(isnan(_prv_output))
         _prv_output = *_output_ptr;
 
-#ifdef FPID_OUTPUT_RAMPRATE
 	// Limit the output by ramprate
 	_outputClampedByRamprate = clamp(&output, 
         _prv_output - _outputRampRate, 
         _prv_output + _outputRampRate);
+#else
+    // First run/sync, if no ramprate limit we can just set the output to the first value
+    if(isnan(_prv_output))
+		_prv_output = output;
 #endif // FPID_OUTPUT_RAMPRATE
 
 	// Limit the output by min/maxOutput
