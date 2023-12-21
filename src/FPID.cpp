@@ -10,7 +10,10 @@
 #include <sys/time.h>
 
 #include "FPID.h"
-// #include "tools-log.h"
+
+#ifdef DEBUG_FPID
+	#include "tools-log.h"
+#endif
 
 int clamp(double *value, const double min, const double max);
 bool isbetween(const double value, const double min, const double max);
@@ -108,7 +111,9 @@ bool FPID::calculate(const double dt)
 {
 	if(!(dt > 0.0) || isnan(dt))
 	{
-		// WARNING(" dt = %f", dt);
+#ifdef DEBUG_FPID
+		WARNING(" dt = %f", dt);
+#endif
         *_output_ptr = NAN;
 		return false;
 	};
@@ -119,7 +124,9 @@ bool FPID::calculate(const double dt)
 
 	if(isnan(input))
 	{
-		// ERROR("input: NAN");
+#ifdef DEBUG_FPID
+		ERROR("input: NAN");
+#endif
         *_output_ptr = NAN;
 		return false;
 	};
@@ -201,14 +208,15 @@ bool FPID::calculate(const double dt)
 		freeze_integral = true;
 #endif
 
-// 	DBG("freeze = %d, ramp(%d), minmax(%d) (%f)", freeze_integral, 
-// #ifdef FPID_OUTPUT_RAMPRATE
-// 		_outputClampedByRamprate,
-// #else
-// 		0,
-// #endif
-// 		 _outputClampedByMinMax, _outputClampedByMinMax*error);
-	
+#ifdef DEBUG_FPID
+	DBG("freeze = %d, ramp(%d), minmax(%d) (%f)", freeze_integral,
+	#ifdef FPID_OUTPUT_RAMPRATE
+			_outputClampedByRamprate,
+	#else
+			0,
+	#endif
+		 _outputClampedByMinMax, _outputClampedByMinMax*error);
+#endif	
 
 	// If errorsum is NAN we need to align it with the current _output not cause a big jump
 	if(isnan(_errorsum))
@@ -247,21 +255,22 @@ bool FPID::calculate(const double dt)
 	output += DDoutput;
 #endif
 
-// 	DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", error, 
-// 		0
-// #ifdef FPID_FORWARD_LINEAR
-// 		+ Foutput_linear
-// #endif
-// #ifdef FPID_FORWARD_DSETPOINT
-// 		+ Foutput_dsetpoint,
-// #endif
-// 		, Poutput
-// #ifdef FPID_PROOT
-// 		+ PRoutput
-// #endif
-// 		, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
+#ifdef DEBUG_FPID
+	DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", 
+	error, 0
+	#ifdef FPID_FORWARD_LINEAR
+		+ Foutput_linear
+	#endif
+	#ifdef FPID_FORWARD_DSETPOINT
+		+ Foutput_dsetpoint,
+	#endif
+		, Poutput
+	#ifdef FPID_PROOT
+		+ PRoutput
+	#endif
+		, Ioutput, freeze_integral ? "(frozen)":"", Doutput, output);
+#endif // DEBUG_FPID
 
-    // First run/sync
     if(isnan(_prv_output))
         _prv_output = *_output_ptr;
 
@@ -282,6 +291,9 @@ bool FPID::calculate(const double dt)
 	_prv_output = output;
 
     *_output_ptr = output;
+#ifdef DEBUG_FPID
+	DBG("output = %f -> 0x%p = %f", output, _output_ptr, *_output_ptr);
+#endif
 	return !freeze_integral;
 };
 
