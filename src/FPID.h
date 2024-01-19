@@ -22,6 +22,7 @@
 // #define FPID_DOUBLE_D
 // #define FPID_OUTPUT_RAMPRATE
 // #define FPID_OUTPUT_FILTER
+// #define FPID_TAKEBACKHALF
 
 class FPID
 {
@@ -69,8 +70,7 @@ class FPID
 #ifdef FPID_OUTPUT_FILTER
             double output_filter; // 0 = No filter
 #endif
-
-            double takebackhalf; // not yet implemented
+            bool takebackhalf;
         } fpid_settings_t;
 
         FPID(fpid_settings_t* s, const double* input, double* output);
@@ -137,6 +137,9 @@ class FPID
         double _prv_setpoint = NAN;
         double _prv_output = NAN;
         double _prv_dterm = NAN;
+
+        double _tbh_prv_errorsum = NAN;
+        double _tbh_limit = NAN;
     	
 #ifdef FPID_OUTPUT_RAMPRATE
     	int _outputClampedByRamprate = 0;

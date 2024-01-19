@@ -15,6 +15,11 @@
 	#include "tools-log.h"
 #endif
 
+// Defaults
+#ifndef FPID_TBH_HYSTERESIS
+    #define FPID_TBH_HYSTERESIS     0.01
+#endif
+
 int clamp(double *value, const double min, const double max);
 bool isbetween(const double value, const double min, const double max);
 
@@ -50,6 +55,9 @@ void FPID::alignOutput()
 {
     _prv_input = NAN;
     _prv_output = NAN;
+#ifdef FPID_TAKEBACKHALF
+	_tbh_prv_errorsum = NAN;
+#endif
 
 	clamp(_output_ptr, _minOutput, _maxOutput);
 
@@ -234,6 +242,45 @@ bool FPID::calculate(const double dt)
 	if(!freeze_integral)
 		_errorsum += _settings_ptr->kI * error * dt;
 
+#ifdef FPID_TAKEBACKHALF
+	if(_settings_ptr->takebackhalf)
+	{
+		// Take-Back-Half
+		double error_hyst = setpoint*FPID_TBH_HYSTERESIS;
+		// first loop detection
+		if(isnan(_tbh_prv_errorsum))
+		{
+			if(error>0)
+			{
+				// If error positive, output will rise, integral will grow
+				_tbh_limit = +error_hyst;
+				_tbh_prv_errorsum = 0;
+			}else{
+				// If error positive, output will fall, integral will shrink
+				_tbh_limit = -error_hyst;
+				_tbh_prv_errorsum = _errorsum;
+			};
+	#ifdef DEBUG_FPID
+			DBG("TBH: init, limit = %.02f, sum_prv = %.02f", _tbh_limit, _tbh_prv_errorsum);
+	#endif
+		};
+		// if zero crossing (with hysteresis), average the intergral between current value 
+		// and value of last crossing: Take Back Half
+		if(_tbh_limit > 0 && error > _tbh_limit)
+		{
+			DBG("TBH: crossing from - to +, prv_I = %f", _tbh_prv_errorsum);
+			_tbh_limit = -error_hyst;
+			_errorsum = _tbh_prv_errorsum = (_errorsum + _tbh_prv_errorsum)/2;
+		};
+		if(_tbh_limit < 0 && error < _tbh_limit)
+		{
+			DBG("TBH: crossing from + to -, prv_I = %f", _tbh_prv_errorsum);
+			_tbh_limit = +error_hyst;
+			_errorsum = _tbh_prv_errorsum = (_errorsum + _tbh_prv_errorsum)/2;
+		};
+	}; // if(take_back_half)
+#endif // FPID_TAKEBACKHALF
+
 	// 3. maxIoutput restricts the amount of output contributed by the Iterm.
     clamp(&_errorsum, -1*_maxIOutput, _maxIOutput);
 
@@ -256,7 +303,8 @@ bool FPID::calculate(const double dt)
 #endif
 
 #ifdef DEBUG_FPID
-	DBG(" error = %.2f FPID = F:%f + P:%f + I:%f%s - D:%f = %f", 
+	DBG("in:%f error = %.2f FPID = F:%f + P:%f + I:%f%s + D:%f = %f", 
+	*_input_ptr,
 	error, 0
 	#ifdef FPID_FORWARD_LINEAR
 		+ Foutput_linear
@@ -298,7 +346,7 @@ bool FPID::calculate(const double dt)
 
     *_output_ptr = output;
 #ifdef DEBUG_FPID
-	DBG("output = %f -> 0x%p = %f", output, _output_ptr, *_output_ptr);
+	// DBG("output = %f -> 0x%p = %f", output, _output_ptr, *_output_ptr);
 #endif
 	return !freeze_integral;
 };
