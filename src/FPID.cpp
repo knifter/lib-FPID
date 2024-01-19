@@ -117,7 +117,7 @@ void FPID::setOutputLimits(const double minimum, const double maximum)
 */
 bool FPID::calculate(const double dt)
 {
-	if(!(dt > 0.0) || isnan(dt))
+	if(!(dt > 0.0) || !isfinite(dt))
 	{
 #ifdef DEBUG_FPID
 		WARNING(" dt = %f", dt);
@@ -130,7 +130,7 @@ bool FPID::calculate(const double dt)
 	double setpoint = _settings_ptr->setpoint;
     double input = *_input_ptr;
 
-	if(isnan(input))
+	if(!isfinite(input))
 	{
 #ifdef DEBUG_FPID
 		ERROR("input: NAN");
@@ -163,7 +163,7 @@ bool FPID::calculate(const double dt)
 #ifdef FPID_FORWARD_DSETPOINT
 	//Calculate Derivative-on-setpoint (which forward term as it depens solely on SP)
 
-	if(isnan(_prv_setpoint))
+	if(!isfinite(_prv_setpoint))
 		_prv_setpoint = setpoint;
 
 	double Foutput_dsetpoint = _settings_ptr->kDsetpoint*(setpoint - _prv_setpoint);
@@ -179,7 +179,7 @@ bool FPID::calculate(const double dt)
 
 	/*********** DERIVATIVE TERMS ***********************************************************************************/
     // First run/sync
-	if(isnan(_prv_input))
+	if(!isnan(_prv_input))
 		_prv_input = input;
 		
 	//Calculate Derrivative-on-measurement
@@ -336,7 +336,7 @@ bool FPID::calculate(const double dt)
         _prv_output + _outputRampRate);
 #else
     // First run/sync, if no ramprate limit we can just set the output to the first value
-    if(isnan(_prv_output))
+    if(!isfinite(_prv_output))
 		_prv_output = output;
 #endif // FPID_OUTPUT_RAMPRATE
 
