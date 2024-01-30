@@ -10,14 +10,14 @@ and the following improvements:
  - [x] Derivative on measurement (derivative on setpoint is a forward term: dsetpoint/dt)
  - [x] external variables: allows to store the settings_t struct in a global struct which is stored in NVS. As most applications will have an interface to edit these..
  - [ ] Take-back-half
+ - [x] Root-P
+ - [x] Double D
+ - [x] Derivative on setpoint (is a forward term)
 
 ## Improvements wishlist
 - [x] Proportional on Measurement
 - [ ] Forward term learning: By storing the output for a certain amount of setpoints an estimate (interpolation) can be made for a forward term.
-- [ ] Root-P
 - [ ] Declining D on big errors
-- [ ] Double D
-- [ ] Derivative on setpoint (is a forward term)
 - [ ] Some kind of AutoTuning
 
 ## Design Goals
