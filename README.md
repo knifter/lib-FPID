@@ -123,3 +123,6 @@ Set the maximum rate of change in a single calculation cycle. This is particular
 
 #### `setOutputFilter(double strength)`
 The output filter prevents sharp changes in the output, adding inertia and minimizing the effect of high frequency oscillations. This adds significant stability to systems with poor tunings, but at the cost of slower setpoint changes, disturbance rejection, and increased overshoot.
+
+## Author
+This software is written by [Tijs van Roon](https://github.com/knifter). It is free to use under the [MIT License](LICENSE).

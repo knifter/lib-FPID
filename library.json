@@ -1,0 +1,28 @@
+{
+  "name": "lib-FPID",
+  "version": "1.0.0",
+  "description": "Feature-rich PID controller for Arduino/ESP32. Adds feed-forward, derivative-on-measurement, output ramping, output filtering, I-term saturation, and root-P mode on top of a standard PID. Settings struct can be stored in NVS via lib-tools.",
+  "keywords": ["pid", "control", "feed-forward", "fpid", "esp32", "arduino"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/knifter/lib-FPID"
+  },
+  "authors": {
+    "name": "Tijs van Roon",
+    "url": "https://github.com/knifter",
+    "maintainer": true
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/knifter/lib-FPID",
+  "frameworks": "arduino",
+  "platforms": "*",
+  "dependencies": [
+    {
+      "name": "lib-tools",
+      "version": "https://github.com/knifter/lib-tools"
+    }
+  ],
+  "build": {
+    "srcDir": "src"
+  }
+}
