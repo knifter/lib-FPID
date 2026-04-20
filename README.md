@@ -6,13 +6,13 @@ My implementation of a simple PID loop with code and ideas combined from:
  - [VEX Robotics Wiki](https://www.vexwiki.org/programming/controls_algorithms)
  
 and the following improvements:
- - [x] Feed-Forward term, base class uses a simple kF*(SetPoint - F-offset)
- - [x] Derivative on measurement (derivative on setpoint is a forward term: dsetpoint/dt)
- - [x] external variables: allows to store the settings_t struct in a global struct which is stored in NVS. As most applications will have an interface to edit these..
- - [ ] Take-back-half
- - [x] Root-P
- - [x] Double D
- - [x] Derivative on setpoint (is a forward term)
+- [x] Feed-Forward term, base class uses a simple kF*(SetPoint - F-offset)
+- [x] Derivative on measurement (derivative on setpoint is a forward term: dsetpoint/dt)
+- [x] external variables: allows to store the settings_t struct in a global struct which is stored in NVS. As most applications will have an interface to edit these..
+- [ ] Take-back-half
+- [x] Root-P
+- [x] Double D
+- [x] Derivative on setpoint (is a forward term)
 
 ## Improvements wishlist
 - [x] Proportional on Measurement
@@ -55,30 +55,47 @@ The I term and summed error will never increase if the system is already doing e
 No need for lots of convoluted calculation functions, or asyncronous calculation modes. After configuration, `getOutput()` is probably the only function you need. 
 
 ## Usage
-OUTDATED
-A bare bones PID system could look like this. 
 
-``` cpp
-FPID pid = FPID();
-//set any other PID configuration options here. 
+The controller works with external pointers for input and output, and a `fpid_settings_t` struct for all tuning parameters. This makes it easy to store settings in NVS and edit them via a UI.
 
-while(true){
-  //get some sort of sensor value
-  pid.input()
-  //set some sort of target value
-  double output = pid.getOutput(sensor,target);
-  //do something with the output
-  delay(50);
+```cpp
+#include <FPID.h>
+
+FPID::fpid_settings_t pid_settings = {
+    .kP = 1.0,
+    .kI = 0.1,
+    .kD = 0.05,
+    .setpoint = 50.0,
+    .takebackhalf = false,
+};
+
+double sensor_value = 0.0;
+double output_value = 0.0;
+
+FPID pid(&pid_settings, &sensor_value, &output_value);
+
+void setup() {
+    pid.setOutputLimits(0.0, 100.0);
+    sensor_value = readSensor();
+    pid.alignOutput();   // align internal state before first calculate()
+}
+
+void loop() {
+    sensor_value = readSensor();
+    double dt = 0.1;           // seconds since last call
+    pid.calculate(dt);
+    applyOutput(output_value);
 }
 ```
-That's it. No fuss, no muss. A few lines of code and some basic tuning, and your PID system is in place. 
+
+> PID systems work best when called at a constant interval. This library does not handle timing — pass the actual elapsed time as `dt`.
 
 ### Getting and setting outputs
-There's several ways. In simple systems, the fastest is  `output=pid.getOutput(sensor,target);`. This does all the calculations with the current values, applying any configuration, and returns the output. 
+The main call is `pid.calculate(dt)`, which runs one iteration using the current `*input` and `settings.setpoint`. It returns `false` when the integral is frozen (output saturated), useful for monitoring windup state.
 
-For more event-driven systems, you can split up the setting and getting, using `output=pid.getOutput(sensor);` and `pid.setSetpoint(target)`.
+Update `settings.setpoint` at any time between calls — the next `calculate()` picks it up automatically.
 
-If your outputs are to be disabled or driven by a different system, then you may want to use the `pid.reset()` method. That will set the PID controller to re-initialize the next time  `getOutput()` is used. Because of this, `reset()` can be used when disabling PID control, when reenabling it, or at any point between.
+If your output is disabled or driven by something else, call `pid.alignOutput()` before restarting the loop. This aligns the internal errorsum and previous-output state with the current output value, preventing a large startup kick.
 
 ### Configuring the PID. 
 The most complex part of PID systems is the configuration. Tuning a PID process properly typically requires either significant calculation, significant trial and error, or both. 
@@ -87,14 +104,13 @@ This library is designed to produce "decent" PID results with minimal effort and
 
 Note, PID systems work best when the calculations are performed at constant time intervals. This PID implimentation does not handle this, and assumes the primary loop or framework handles the precise timing details.
 
-#### `FPID(p, i, d)`
-#### `FPID(f, p, i, d)`
+#### `FPID(fpid_settings_t* settings, const double* input, double* output)`
 
-These create the basic PID, allowing for further configuration. Generally, you initialize the PID values here, but you can re-configure on the fly using the `setP(double P)`,`setI(double I)`,`setD(double D)`, and `setF(double F)` methods. 
+Takes pointers to the settings struct, input variable, and output variable. All tuning parameters live in `fpid_settings_t` — including `kP`, `kI`, `kD`, `setpoint`, and optional terms depending on enabled features (see below). Gains can be changed at any time by writing to the struct; the next `calculate()` call will use the new values.
 
-Tuning PID systems is out of scope of this readme, but a good examples can be found all over the internet. 
+Tuning PID systems is out of scope of this readme, but a good examples can be found all over the internet.
 
-#### `SetF(double F)`
+#### Feed-Forward (`kF`, requires `#define FPID_FORWARD_LINEAR`)
 Feed-Forward is a 4th system variable that is very helpful on systems with a target velocity, or other systems where an on-target system results in continous motion. Feed forward is not helpful on positional control systems, or other systems where being on target results in halted (or small cyclic) motion.
 
 Conceptually, Feed-forward defines a "best guess" as to what the system output should be for a given setpoint value. Feed forward does not consider what the system is _actually_ doing, and a system driven solely by feed-forward is actually an open-loop system. Mathematically, a feed-forward only system is equivilent to `output=setpoint*F`. 
@@ -110,19 +126,14 @@ Optional, but highly recommended to set. The set the output limits, and ensure t
 #### `setMaxIOutput(double maximum)`
 Sets the maximum output generated by the I term inside the controller. This is independent of the `setOutputLimits` values. This can assist in reducing windup over large setpoint changes or stall conditions. 
 
-#### `setDirection(boolean reversed)`
-Reverses the output. Use this if the controller attempts to go the wrong way during operation. 
+#### `alignOutput()`
+Aligns the internal state (errorsum, previous input/output) with the current output value. Call this before (re)starting the control loop when the output may have been driven externally — for example after manual control or after the loop was disabled. Prevents a large startup kick.
 
-#### `reset()`
-Resets the PID controller. This primarily clears the I and D terms clears the previous sensor state, and sets the target setpoint the the current position. 
+#### Output ramp rate (`FPID_OUTPUT_RAMPRATE`)
+When this feature is enabled at compile time, the output is limited to a maximum rate of change per cycle. This is particularly useful for adding "inertia" to the system, preventing jerks during setpoint changes. The ramp rate is set via the settings struct.
 
-This is useful if the output system's state may have changed since the last time the PID system output was applied. This is generally the case when the output system is in a manual control mode (such as a joystick), or was disabled and may have been physically moved.
-
-#### `setOutputRampRate(double rate)`
-Set the maximum rate of change in a single calculation cycle. This is particularly useful for adding "inertial" to the system, preventing jerks during setpoint changes.
-
-#### `setOutputFilter(double strength)`
-The output filter prevents sharp changes in the output, adding inertia and minimizing the effect of high frequency oscillations. This adds significant stability to systems with poor tunings, but at the cost of slower setpoint changes, disturbance rejection, and increased overshoot.
+#### Output filter (`FPID_OUTPUT_FILTER`)
+When this feature is enabled at compile time, the output is low-pass filtered using an exponential rolling sum (`output_filter` in the settings struct, range [0..1)). This prevents sharp changes in the output, adding inertia and minimizing the effect of high-frequency oscillations. This adds significant stability to systems with poor tunings, but at the cost of slower setpoint changes, disturbance rejection, and increased overshoot.
 
 ## Author
 This software is written by [Tijs van Roon](https://github.com/knifter). It is free to use under the [MIT License](LICENSE).
